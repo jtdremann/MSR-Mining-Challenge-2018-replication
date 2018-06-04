@@ -15,9 +15,15 @@
  * the License.
  */
 
-import examples.CountEventTypeExample;
-import examples.rsse.calls.BMNMining;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 
+import miner.WorkingHabitsMiner;
+
+/**
+ * Slight modification of the original KaVE Project's example RunMe.java found at
+ * https://github.com/kave-cc/java-cc-kave-examples/blob/master/src/main/java/RunMe.java
+ */
 public class RunMe {
 
 	/*
@@ -26,22 +32,14 @@ public class RunMe {
 	 * includes a bunch of folders that have dates as names and that contain .zip
 	 * files.
 	 */
-	public static String eventsDir = "/Volumes/Data/Events-170301-2";
-
-	/*
-	 * download the context data and follow the same instructions as before.
-	 */
-	public static String contextsDir = "Contexts-170503";
+	public static String eventsDir = "Events-170301-2";
 
 	public static void main(String[] args) {
-
-		// BASIC DATA READING
-		
-		// new GettingStarted(eventsDir).run();
-		new CountEventTypeExample(eventsDir).run();
-		// new GettingStartedContexts(contextsDir).run();
-		
-		// RSSE RELATED EXAMPLES
-		new BMNMining().run();
+		try {
+			new WorkingHabitsMiner(eventsDir).run();
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 };
