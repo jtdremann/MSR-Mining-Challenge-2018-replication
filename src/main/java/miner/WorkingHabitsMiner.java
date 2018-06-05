@@ -35,6 +35,8 @@ import examples.IoHelper;
  */
 public class WorkingHabitsMiner {
 	
+	private LocalDateTime start;
+	private LocalDateTime stop;
 	private PrintWriter dayOfWeekPw;
 	private PrintWriter continuousPw;
 	private String dir;
@@ -78,6 +80,8 @@ public class WorkingHabitsMiner {
 	}
 	
 	public void run() throws FileNotFoundException, UnsupportedEncodingException {
+		start = LocalDateTime.now();
+		
 		// Write .csv header rows
 		dayOfWeekPw = new PrintWriter("day-of-week-output.csv", "UTF-8");
 		dayOfWeekPw.println("userId,date,dayOfWeek,workingTime,continuousTime,totalBuildEvents,totalBuildTargets,buildTargetSuccesses"
@@ -101,6 +105,9 @@ public class WorkingHabitsMiner {
 			Set<String> userZips = IoHelper.findAllZips(dir);
 	
 			for (String userZip : userZips) {
+				prevDate = null;
+				activityCutoff = null;
+				
 				userId++;
 				System.out.printf("\n#### processing user zip: %s #####\n", userZip);
 				processUserZip(userZip);
@@ -110,10 +117,14 @@ public class WorkingHabitsMiner {
 		} finally {
 			dayOfWeekPw.close();
 		}
+		
+		stop = LocalDateTime.now();
+		
+		System.out.println("Began at " + start.toString());
+		System.out.println("Ended at " + stop.toString());
 	}
 
 	private void processUserZip(String userZip) {
-		int numProcessedEvents = 0;
 		// open the .zip file ...
 		try (IReadingArchive ra = new ReadingArchive(new File(dir, userZip))) {
 			// ... and iterate over content.
@@ -180,12 +191,11 @@ public class WorkingHabitsMiner {
 			if(prevDate.getDayOfMonth() == date.getDayOfMonth()) {
 				if(date.isBefore(activityCutoff)) {
 					long deltaSeconds = date.toEpochSecond(ZoneOffset.UTC) - prevDate.toEpochSecond(ZoneOffset.UTC);
+					
 					dowContinuousSeconds += deltaSeconds;
 				}
 			}
 			else {
-				// TODO session time for working time - cut off at midnight
-				
 				// TODO if date is before activityCutoff, they were working through midnight
 				// I.E. add midnight - prevDate, save and reset continuous time,
 				// then add date - midnight to continuous time
@@ -200,6 +210,9 @@ public class WorkingHabitsMiner {
 			else {
 				addContinuousRow(prevDate);
 			}//*/
+			
+			// Total between the two different data set might differ; if the user continuously works across midnight,
+			// continuous time gets cut off for day-of-week-output.csv, but not continuous-output.csv
 		}
 		
 		prevDate = date;

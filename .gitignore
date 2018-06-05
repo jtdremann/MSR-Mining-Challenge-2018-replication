@@ -7,4 +7,5 @@
 **/*.versionsBackup
 **/.DS_Store
 
+.Rhistory
 /bin/
