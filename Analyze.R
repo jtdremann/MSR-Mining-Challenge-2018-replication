@@ -14,6 +14,13 @@ cont$orderedDaysOfWeek<-factor(cont$dayOfWeek,levels=levels(cont$dayOfWeek)[c(2,
 plot(dow$orderedDaysOfWeek)
 
 #Calculate success and failure rate
+agg <- aggregate(x=list(TBT=dow$totalBuildTargets, TBS=dow$buildTargetSuccesses, TBF=dow$buildTargetFails,
+                        TTR=dow$totalTestCaseResults, TCS=dow$testCaseSuccesses, TCF=dow$testCaseFails, TCE=dow$testCaseErrors),
+                 by=list(Day=dow$orderedDaysOfWeek),
+                 FUN=sum)
+
+agg$successRate <- ((agg$TBS + agg$TCS)/(agg$TBT + agg$TTR)) * 100
+agg$failureRate <- ((agg$TBF + agg$TCF + agg$TCE)/(agg$TBT + agg$TTR)) * 100
 dow$successRate <- ( (dow$buildTargetSuccesses + dow$testCaseSuccesses) / (dow$totalBuildTargets + dow$totalTestCaseResults) * 100 )
 cont$successRate <- ( (cont$buildTargetSuccesses + cont$testCaseSuccesses) / (cont$totalBuildTargets + cont$totalTestCaseResults) * 100 )
 
@@ -30,11 +37,13 @@ agg_success <- aggregate(x=list(Success_Rate=dowRates$successRate, Failure_Rate=
                          FUN=mean)
 
 # Basic line plot of both the success rate and failure rate
-ggplot(data=agg_success, aes(x=Day, y=Success_Rate, group=1)) +
-  geom_line() + aes(y = Success_Rate) + geom_line(aes(y = Failure_Rate)) +
+ggplot(data=agg, aes(x=Day, y=successRate, group=1)) +
+  geom_line() + aes(y = successRate) + geom_line(aes(y = failureRate)) +
   ylim(0, 100)
 
-
+# ggplot(data=agg_success, aes(x=Day, y=Success_Rate, group=1)) +
+  # geom_line() + aes(y = Success_Rate) + geom_line(aes(y = Failure_Rate)) +
+  # ylim(0, 100)
 
 # Continuous time data
 dowAggTime <- aggregate(x=list(Time=dow$continuousTime),
@@ -61,3 +70,12 @@ intervals$orderedDuration <- factor(intervals$Duration, levels=levels(intervals$
 ggplot(data=intervals, aes(x=orderedDuration, y=SuccessRate, group=1)) +
   geom_line() + aes(y = SuccessRate) + geom_line(aes(y = FailRate)) +
   ylim(0, 100)
+
+contRates$duration = ""
+contRates[contRates$continuousTime < (25*60),"duration"] = "0m-25m"
+contRates[contRates$continuousTime >= (25*60) & contRates$continuousTime < (60*60),"duration"] = "25m-1h"
+contRates[contRates$continuousTime >= (60*60) & contRates$continuousTime < (120*60),"duration"] = "1h-2h"
+contRates[contRates$continuousTime >= (120*60),"duration"] = "2h+"
+
+myTest = table(contRates$dayOfWeek, contRates$duration)
+chisq.test(myTest)
